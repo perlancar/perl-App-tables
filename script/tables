@@ -1,0 +1,58 @@
+#!perl
+
+# AUTHORITY
+# DATE
+# DIST
+# VERSION
+
+use 5.010001;
+use strict;
+use warnings;
+
+use Perinci::CmdLine::Any;
+
+my $prefix = "/App/tables/";
+
+Perinci::CmdLine::Any->new(
+    url => "$prefix",
+    subcommands => {
+        ls        => { url => "${prefix}list_installed_tables_modules" },
+        show      => { url => "${prefix}show_tables_module" },
+        info      => { url => "${prefix}get_tables_module_info" },
+    },
+)->run;
+
+# ABSTRACT: Manipulate Tables::* modules
+# PODNAME:
+
+=head1 SYNOPSIS
+
+List all installed Tables::* modules:
+
+ % tables ls
+ % tables ls -l
+
+Show contents of a Tables::* module:
+
+ % tables show Locale::US::States
+ % tables show Locale::US::States --as aohos
+ % tables show Locale::US::States --as csv
+
+Show information about a Tables::* module:
+
+ % tables info Locale::US::States
+
+To manipulate table data further, you can use L<td> from L<App::td>, e.g.:
+
+ # select a few columns
+ % tables show Locale::US::States | td select name code
+
+ # grep rows using Perl code
+ % tables show Locale::US::States --as aohos | td grep '$_->{name} =~ /al/i'
+
+
+=head1 SEE ALSO
+
+L<Tables>
+
+L<td> from L<App::td>
