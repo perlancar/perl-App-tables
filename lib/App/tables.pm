@@ -56,14 +56,14 @@ sub list_installed_tables_modules {
     my %args = @_;
 
     my $mods = Module::List::Tiny::list_modules(
-        'Tables::*', {list_modules=>1, recurse=>1});
+        'Tables::', {list_modules=>1, recurse=>1});
     my @rows;
     for my $mod (sort keys %$mods) {
         (my $table = $mod) =~ s/^Tables:://;
         push @rows, {table=>$table};
     }
 
-    @rows = map { $_->{name} } @rows unless $args{detail};
+    @rows = map { $_->{table} } @rows unless $args{detail};
 
     [200, "OK", \@rows];
 }
@@ -96,12 +96,37 @@ sub show_tables_module {
     }
 
     my @rows;
-    for my $mod (sort keys %$mods) {
-        push @rows, $as eq 'aohos' ?
-            $table->get_row_hashref :
-            $table->get_row_arrayref;
+    while (1) {
+        my $row = $as eq 'aohos' ? $table->get_row_hashref : $table->get_row_arrayref;
+        last unless $row;
+        push @rows, $row;
     }
     [200, "OK", \@rows, {'table.fields'=>scalar $table->get_column_names}];
+}
+
+$SPEC{get_tables_module_info} = {
+    v => 1.1,
+    summary => 'Show information about a Tables::* module',
+    args => {
+        %arg0_table,
+    },
+};
+sub get_tables_module_info {
+    my %args = @_;
+
+    my $mod = "Tables::$args{table}";
+    (my $modpm = "$mod.pm") =~ s!::!/!g;
+    require $modpm;
+
+    my $table = $mod->new(%{ $args{table_args} // {} });
+
+    return [200, "OK", {
+        table => $args{table},
+        module => $mod,
+        column_count => $table->get_column_count,
+        column_names => $table->get_column_names,
+        row_count => $table->get_row_count,
+    }];
 }
 
 1;
